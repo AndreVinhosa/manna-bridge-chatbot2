@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import Head from 'next/head'
 import Chatbot from '../components/Chatbot'
 import { NotificationProvider, useNotification } from '../contexts/NotificationContext'
 import LoadingSpinner from '../components/LoadingSpinner'
@@ -187,6 +188,9 @@ const ChatCallToAction = () => {
 const HomeContent = () => {
   const [scrollY, setScrollY] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false)
+  const { showSuccess, showInfo } = useNotification()
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY)
@@ -199,6 +203,49 @@ const HomeContent = () => {
     const timer = setTimeout(() => setIsLoading(false), 1500)
     return () => clearTimeout(timer)
   }, [])
+
+  useEffect(() => {
+    // Registrar Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then((registration) => {
+          console.log('SW registered:', registration)
+          showSuccess('App Pronto!', 'Manna Bridge está disponível offline.')
+        })
+        .catch((error) => {
+          console.error('SW registration failed:', error)
+        })
+    }
+
+    // Listener para prompt de instalação
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault()
+      setDeferredPrompt(e)
+      setShowInstallPrompt(true)
+    }
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+    
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+    }
+  }, [showSuccess])
+
+  const handleInstallApp = async () => {
+    if (!deferredPrompt) return
+
+    deferredPrompt.prompt()
+    const { outcome } = await deferredPrompt.userChoice
+    
+    if (outcome === 'accepted') {
+      showSuccess('App Instalado!', 'Manna Bridge foi adicionado à sua tela inicial.')
+    } else {
+      showInfo('Instalação Cancelada', 'Você pode instalar o app a qualquer momento.')
+    }
+    
+    setDeferredPrompt(null)
+    setShowInstallPrompt(false)
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 relative">
@@ -395,11 +442,12 @@ const HomeContent = () => {
         </div>
       </footer>
 
-      {/* Chatbot Component */}
-      <div data-chatbot>
-        <Chatbot />
+        {/* Chatbot Component */}
+        <div data-chatbot>
+          <Chatbot />
+        </div>
       </div>
-    </div>
+    </>
   )
 }
 
