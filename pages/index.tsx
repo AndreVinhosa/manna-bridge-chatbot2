@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import Chatbot from '../components/Chatbot'
+import { NotificationProvider, useNotification } from '../contexts/NotificationContext'
+import LoadingSpinner from '../components/LoadingSpinner'
+import { FeatureCardSkeleton } from '../components/SkeletonScreen'
 import { Heart, MessageCircle, Users, Shield, Star, ChevronDown } from 'lucide-react'
 
-// Componente de Card Interativo
+// Componente de Card Interativo com Feedback
 const FeatureCard = ({ icon, title, description, delay = 0 }: {
   icon: React.ReactNode
   title: string
@@ -12,6 +15,7 @@ const FeatureCard = ({ icon, title, description, delay = 0 }: {
   const [isHovered, setIsHovered] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
   const [isFocused, setIsFocused] = useState(false)
+  const { showInfo } = useNotification()
   
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), delay * 1000)
@@ -21,10 +25,19 @@ const FeatureCard = ({ icon, title, description, delay = 0 }: {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
-      // Simular clique no card
-      setIsHovered(true)
-      setTimeout(() => setIsHovered(false), 200)
+      handleCardClick()
     }
+  }
+
+  const handleCardClick = () => {
+    setIsHovered(true)
+    setTimeout(() => setIsHovered(false), 200)
+    
+    // Feedback visual com notificação
+    showInfo(
+      `${title} Selecionado`,
+      `Saiba mais sobre como o Manna Bridge ajuda ${title.toLowerCase()}.`
+    )
   }
   
   return (
@@ -37,10 +50,12 @@ const FeatureCard = ({ icon, title, description, delay = 0 }: {
       onFocus={() => setIsFocused(true)}
       onBlur={() => setIsFocused(false)}
       onKeyDown={handleKeyDown}
+      onClick={handleCardClick}
       className={`
-        bg-white/70 backdrop-blur-sm p-6 rounded-2xl border border-gold-200 shadow-sm 
+        bg-white/70 backdrop-blur-sm p-4 sm:p-6 rounded-2xl border border-gold-200 shadow-sm 
         hover:shadow-lg focus:shadow-lg focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50
         transition-all duration-500 cursor-pointer transform outline-none
+        min-h-[180px] sm:min-h-[200px] flex flex-col justify-center
         ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
         ${isHovered || isFocused ? 'scale-105' : 'scale-100'}
       `}
@@ -48,16 +63,16 @@ const FeatureCard = ({ icon, title, description, delay = 0 }: {
     >
       <div
         className={`
-          w-14 h-14 bg-gradient-to-r from-primary-100 to-primary-200 rounded-2xl 
-          flex items-center justify-center mx-auto mb-4 transition-transform duration-300
+          w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-r from-primary-100 to-primary-200 rounded-2xl 
+          flex items-center justify-center mx-auto mb-3 sm:mb-4 transition-transform duration-300
           ${isHovered || isFocused ? 'scale-110 rotate-6' : 'scale-100 rotate-0'}
         `}
         aria-hidden="true"
       >
         {icon}
       </div>
-      <h3 className="text-xl font-bold text-gray-900 mb-3 text-center">{title}</h3>
-      <p className="text-gray-600 text-center leading-relaxed">{description}</p>
+      <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 sm:mb-3 text-center px-2">{title}</h3>
+      <p className="text-sm sm:text-base text-gray-600 text-center leading-relaxed px-2">{description}</p>
     </div>
   )
 }
@@ -104,23 +119,33 @@ const VerseCard = ({ verse, reference, delay = 0 }: {
   )
 }
 
-// Componente de Call-to-Action Interativo
+// Componente de Call-to-Action para Chat com Feedback
 const ChatCallToAction = () => {
   const [isVisible, setIsVisible] = useState(false)
+  const { showSuccess } = useNotification()
   
   useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(true), 1000)
+    const timer = setTimeout(() => setIsVisible(true), 2000)
     return () => clearTimeout(timer)
   }, [])
+
+  const handleChatClick = () => {
+    showSuccess(
+      'Chat Ativado!',
+      'Clique no ícone de chat para começar nossa conversa cristã.'
+    )
+    
+    // Simular abertura do chat
+    const chatButton = document.querySelector('[data-chat-button]') as HTMLElement
+    if (chatButton) {
+      chatButton.click()
+    }
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
-      // Scroll para o chatbot ou ativar chatbot
-      const chatbotElement = document.querySelector('[data-chatbot]')
-      if (chatbotElement) {
-        chatbotElement.scrollIntoView({ behavior: 'smooth' })
-      }
+      handleChatClick()
     }
   }
   
@@ -132,23 +157,24 @@ const ChatCallToAction = () => {
           tabIndex={0}
           aria-label="Convite para conversar com o assistente cristão Manna Bridge"
           onKeyDown={handleKeyDown}
-          className="bg-gradient-to-r from-primary-500 to-gold-500 p-8 rounded-3xl text-white shadow-xl mb-12 relative overflow-hidden animate-fade-in-up focus:ring-2 focus:ring-white focus:ring-opacity-50 outline-none cursor-pointer"
+          onClick={handleChatClick}
+          className="bg-gradient-to-r from-primary-500 to-gold-500 p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl text-white shadow-xl mb-8 sm:mb-12 relative overflow-hidden animate-fade-in-up focus:ring-2 focus:ring-white focus:ring-opacity-50 outline-none cursor-pointer mx-2"
         >
           {/* Efeito de brilho animado */}
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" aria-hidden="true" />
           
           <div className="animate-gentle-bounce" aria-hidden="true">
-            <MessageCircle className="mx-auto mb-4 animate-pulse" size={48} />
+            <MessageCircle className="mx-auto mb-3 sm:mb-4 animate-pulse" size={40} />
           </div>
           
-          <h3 className="text-2xl font-bold mb-3">Converse Comigo!</h3>
-          <p className="text-lg opacity-90 mb-4">
+          <h3 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-3">Converse Comigo!</h3>
+          <p className="text-base sm:text-lg opacity-90 mb-3 sm:mb-4 px-2">
             Clique no botão de chat para começar nossa conversa
           </p>
           
           <div className="flex justify-center" aria-hidden="true">
-            <div className="bg-white/20 p-3 rounded-full animate-bounce">
-              <div className="w-4 h-4 bg-white rounded-full animate-ping" />
+            <div className="bg-white/20 p-2 sm:p-3 rounded-full animate-bounce">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-white rounded-full animate-ping" />
             </div>
           </div>
         </section>
@@ -157,22 +183,25 @@ const ChatCallToAction = () => {
   )
 }
 
-export default function Home() {
+// Componente principal com Provider de Notificações
+const HomeContent = () => {
   const [scrollY, setScrollY] = useState(0)
-  const [showScrollIndicator, setShowScrollIndicator] = useState(true)
-  
+  const [isLoading, setIsLoading] = useState(true)
+
   useEffect(() => {
-    const handleScroll = () => {
-      setScrollY(window.scrollY)
-      setShowScrollIndicator(window.scrollY < 100)
-    }
-    
+    const handleScroll = () => setScrollY(window.scrollY)
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
-  
+
+  useEffect(() => {
+    // Simular carregamento inicial
+    const timer = setTimeout(() => setIsLoading(false), 1500)
+    return () => clearTimeout(timer)
+  }, [])
+
   return (
-    <div className="min-h-section bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 relative">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 relative">
       {/* Skip to main content link */}
       <a 
         href="#main-content"
@@ -181,23 +210,23 @@ export default function Home() {
         Pular para o conteúdo principal
       </a>
 
-      {/* Header Animado */}
+      {/* Header Responsivo */}
       <header
         role="banner"
         className="bg-white/80 backdrop-blur-sm border-b border-gold-200 sticky top-0 z-40 animate-fade-in-down"
         style={{ transform: `translateY(${scrollY * 0.1}px)` }}
       >
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-4">
           <div className="flex items-center justify-center">
-            <div className="flex items-center space-x-3 hover:scale-105 transition-transform duration-300">
-              <div className="w-12 h-12 bg-gradient-to-r from-primary-500 to-gold-500 rounded-full flex items-center justify-center shadow-lg animate-gentle-bounce" aria-hidden="true">
-                <Heart className="text-white" size={24} />
+            <div className="flex items-center space-x-2 sm:space-x-3 hover:scale-105 transition-transform duration-300">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-primary-500 to-gold-500 rounded-full flex items-center justify-center shadow-lg animate-gentle-bounce" aria-hidden="true">
+                <Heart className="text-white" size={20} />
               </div>
               <div className="text-center">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-600 to-gold-600 bg-clip-text text-transparent">
+                <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary-600 to-gold-600 bg-clip-text text-transparent">
                   Manna Bridge
                 </h1>
-                <p className="text-sm text-gray-600 font-medium" role="doc-subtitle">Assistente Cristão</p>
+                <p className="text-xs sm:text-sm text-gray-600 font-medium" role="doc-subtitle">Assistente Cristão</p>
               </div>
             </div>
           </div>
@@ -217,9 +246,9 @@ export default function Home() {
         </div>
       )}
 
-      {/* Hero Section Focada no Chatbot */}
-      <main id="main-content" role="main" className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="text-center mb-16">
+      {/* Hero Section Mobile-First */}
+      <main id="main-content" role="main" className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
+        <div className="text-center mb-12 sm:mb-16">
           {/* Versículo em Destaque */}
           <VerseCard
             verse="E o meu Deus, segundo as suas riquezas, suprirá todas as vossas necessidades em glória, por Cristo Jesus."
@@ -227,78 +256,140 @@ export default function Home() {
             delay={0.2}
           />
 
-          <h2 className="text-5xl font-bold text-gray-900 mb-6 leading-tight animate-fade-in-up">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight animate-fade-in-up px-2">
             Paz do Senhor! 🌟
           </h2>
           
-          <p className="text-xl text-gray-700 mb-8 max-w-2xl mx-auto leading-relaxed animate-fade-in-up animation-delay-300">
+          <p className="text-lg sm:text-xl text-gray-700 mb-6 sm:mb-8 max-w-2xl mx-auto leading-relaxed animate-fade-in-up animation-delay-300 px-4">
             Sou seu assistente cristão para conectar{' '}
             <span className="font-semibold text-primary-600">missionários</span> e{' '}
             <span className="font-semibold text-gold-600">mantenedores</span> no Reino de Deus.
           </p>
 
-          {/* Call to Action Interativo */}
+          {/* Seção de Features */}
+          <section 
+            id="features"
+            className="py-8 sm:py-12 lg:py-16 px-3 sm:px-6 lg:px-8"
+            role="region"
+            aria-labelledby="features-heading"
+          >
+            <div className="max-w-6xl mx-auto">
+              <h2 
+                id="features-heading"
+                className="text-3xl sm:text-4xl lg:text-5xl font-bold text-center text-gray-900 mb-8 sm:mb-12 animate-fade-in-up"
+              >
+                Como Podemos Te Ajudar? 🤝
+              </h2>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
+                {isLoading ? (
+                  <>
+                    <FeatureCardSkeleton />
+                    <FeatureCardSkeleton />
+                    <div className="sm:col-span-2 lg:col-span-1">
+                      <FeatureCardSkeleton />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <FeatureCard
+                      icon={<Heart className="text-primary-600" size={24} />}
+                      title="Missionários"
+                      description="Conecte-se com apoiadores que compartilham sua visão de espalhar o amor de Cristo pelo mundo."
+                      delay={0.2}
+                    />
+                    
+                    <FeatureCard
+                      icon={<Users className="text-primary-600" size={24} />}
+                      title="Mantenedores"
+                      description="Apoie missionários dedicados e faça parte da Grande Comissão de forma prática e significativa."
+                      delay={0.4}
+                    />
+                    
+                    <div className="sm:col-span-2 lg:col-span-1">
+                      <FeatureCard
+                        icon={<Shield className="text-primary-600" size={24} />}
+                        title="Transparência"
+                        description="Acompanhe o impacto do seu apoio com relatórios detalhados e atualizações regulares dos missionários."
+                        delay={0.6}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+          </section>
+
+          {/* Call to Action Mobile Otimizado */}
           <ChatCallToAction />
+
+          {/* Seção de Confiança Mobile Otimizada */}
+          <section 
+            aria-labelledby="trust-heading"
+            className="text-center bg-white/60 backdrop-blur-sm p-4 sm:p-6 lg:p-8 rounded-2xl border border-gold-200 animate-fade-in-up mx-2"
+          >
+            <div className="animate-spin-slow" aria-hidden="true">
+              <Shield className="mx-auto mb-3 sm:mb-4 text-primary-600" size={32} />
+            </div>
+            <h3 id="trust-heading" className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-3">Transparência e Cuidado</h3>
+            <p className="text-sm sm:text-base text-gray-700 max-w-2xl mx-auto leading-relaxed px-2">
+              Nossa plataforma é baseada em princípios cristãos de transparência, amor e cuidado mútuo. 
+              Cada conversa é guiada pela Palavra de Deus e pelo desejo de fortalecer o Corpo de Cristo.
+            </p>
+          </section>
         </div>
 
-        {/* Funcionalidades Principais com React */}
+        {/* Grid Responsivo Mobile-First */}
         <section 
           aria-labelledby="features-heading"
-          className="mb-16"
+          className="mb-12 sm:mb-16"
         >
           <h2 id="features-heading" className="sr-only">
             Funcionalidades principais do Manna Bridge
           </h2>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-2">
             <FeatureCard
-              icon={<span className="text-3xl" role="img" aria-label="Emoji de oração">🙏</span>}
+              icon={<span className="text-2xl sm:text-3xl" role="img" aria-label="Emoji de oração">🙏</span>}
               title="Missionários"
               description="Orientação sobre apoio financeiro, comunidade e prestação de contas transparente."
               delay={0.2}
             />
             
             <FeatureCard
-              icon={<span className="text-3xl" role="img" aria-label="Emoji de presente com coração">💝</span>}
+              icon={<span className="text-2xl sm:text-3xl" role="img" aria-label="Emoji de presente com coração">💝</span>}
               title="Mantenedores"
               description="Como apoiar missionários com transparência e acompanhar o impacto no Reino."
               delay={0.4}
             />
             
-            <FeatureCard
-              icon={<Users className="text-secondary-600" size={24} aria-label="Ícone de comunidade" />}
-              title="Comunidade"
-              description="Conecte-se com uma comunidade que se apoia mutuamente em amor cristão."
-              delay={0.6}
-            />
+            <div className="sm:col-span-2 lg:col-span-1">
+              <FeatureCard
+                icon={<Users className="text-secondary-600" size={20} aria-label="Ícone de comunidade" />}
+                title="Comunidade"
+                description="Conecte-se com uma comunidade que se apoia mutuamente em amor cristão."
+                delay={0.6}
+              />
+            </div>
           </div>
         </section>
 
-        {/* Seção de Confiança Animada */}
-        <section 
-          aria-labelledby="trust-heading"
-          className="text-center bg-white/60 backdrop-blur-sm p-8 rounded-2xl border border-gold-200 animate-fade-in-up"
-        >
-          <div className="animate-spin-slow" aria-hidden="true">
-            <Shield className="mx-auto mb-4 text-primary-600" size={40} />
-          </div>
-          <h3 id="trust-heading" className="text-2xl font-bold text-gray-900 mb-3">Transparência e Cuidado</h3>
-          <p className="text-gray-700 max-w-2xl mx-auto leading-relaxed">
-            Nossa plataforma é baseada em princípios cristãos de transparência, amor e cuidado mútuo. 
-            Cada conversa é guiada pela Palavra de Deus e pelo desejo de fortalecer o Corpo de Cristo.
-          </p>
-        </section>
+        {/* Versículo Inspiracional */}
+        <VerseCard 
+          verse="E tudo quanto fizerdes, fazei-o de todo o coração, como ao Senhor, e não aos homens."
+          reference="Colossenses 3:23"
+          delay={1.2}
+        />
       </main>
 
-      {/* Footer Animado */}
+      {/* Footer Mobile Responsivo */}
       <footer 
         role="contentinfo"
-        className="bg-white/80 backdrop-blur-sm border-t border-gold-200 py-8 animate-fade-in"
+        className="bg-white/80 backdrop-blur-sm border-t border-gold-200 py-6 sm:py-8 animate-fade-in"
       >
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <blockquote className="text-gray-600 mb-2 animate-fade-in-up animation-delay-200">
+        <div className="max-w-4xl mx-auto px-3 sm:px-4 text-center">
+          <blockquote className="text-sm sm:text-base text-gray-600 mb-2 animate-fade-in-up animation-delay-200 px-4">
             "Levai as cargas uns dos outros, e assim cumprireis a lei de Cristo."
           </blockquote>
-          <cite className="text-sm text-primary-600 font-semibold animate-fade-in-up animation-delay-400">
+          <cite className="text-xs sm:text-sm text-primary-600 font-semibold animate-fade-in-up animation-delay-400">
             Gálatas 6:2
           </cite>
         </div>
@@ -309,5 +400,14 @@ export default function Home() {
         <Chatbot />
       </div>
     </div>
+  )
+}
+
+// Wrapper principal com Provider de Notificações
+export default function Home() {
+  return (
+    <NotificationProvider>
+      <HomeContent />
+    </NotificationProvider>
   )
 }

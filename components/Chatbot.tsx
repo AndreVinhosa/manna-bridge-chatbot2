@@ -3,6 +3,9 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MessageCircle, X, Send, Heart, Mail, Phone } from 'lucide-react'
+import { useNotification } from '../contexts/NotificationContext'
+import LoadingSpinner from './LoadingSpinner'
+import { MessageSkeleton } from './SkeletonScreen'
 
 interface Message {
   id: string
@@ -26,6 +29,7 @@ const Chatbot: React.FC = () => {
   const [emailForm, setEmailForm] = useState({ name: '', email: '', message: '' })
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const userId = useRef(Math.random().toString(36).substr(2, 9))
+  const { showSuccess, showError, showInfo } = useNotification()
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -82,9 +86,13 @@ const Chatbot: React.FC = () => {
           setMessages(prev => [...prev, botMessage])
           setIsTyping(false)
         }, 1000)
+      } else {
+        showError('Erro na Conversa', 'Não foi possível processar sua mensagem. Tente novamente.')
+        setIsTyping(false)
       }
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error)
+      showError('Conexão Perdida', 'Verifique sua conexão com a internet e tente novamente.')
       setIsTyping(false)
     }
   }
@@ -137,6 +145,8 @@ const Chatbot: React.FC = () => {
         setShowEmailModal(false)
         setEmailForm({ name: '', email: '', message: '' })
         
+        showSuccess('Contato Enviado!', 'Recebemos sua mensagem e entraremos em contato em breve.')
+        
         const confirmMessage: Message = {
           id: Date.now().toString(),
           text: data.message,
@@ -144,9 +154,12 @@ const Chatbot: React.FC = () => {
           timestamp: new Date()
         }
         setMessages(prev => [...prev, confirmMessage])
+      } else {
+        showError('Erro no Envio', 'Não foi possível enviar sua mensagem. Tente novamente.')
       }
     } catch (error) {
       console.error('Erro ao enviar contato:', error)
+      showError('Falha na Conexão', 'Verifique sua internet e tente enviar novamente.')
     }
   }
 
@@ -288,24 +301,7 @@ const Chatbot: React.FC = () => {
                 </motion.div>
               ))}
               
-              {isTyping && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex justify-start"
-                >
-                  <div className="w-8 h-8 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center mr-2 flex-shrink-0">
-                    <Heart className="text-white" size={16} />
-                  </div>
-                  <div className="bg-white px-4 py-3 rounded-2xl shadow-sm border border-gray-200">
-                    <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
+              {isTyping && <MessageSkeleton />}
               
               <div ref={messagesEndRef} />
             </div>
@@ -325,10 +321,14 @@ const Chatbot: React.FC = () => {
                   type="submit"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white p-2 rounded-full transition-colors duration-200 disabled:opacity-50"
+                  className="bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white p-2 rounded-full transition-colors duration-200 disabled:opacity-50 flex items-center justify-center min-w-[40px] min-h-[40px]"
                   disabled={!inputValue.trim() || isTyping}
                 >
-                  <Send size={20} />
+                  {isTyping ? (
+                    <LoadingSpinner size="sm" color="white" />
+                  ) : (
+                    <Send size={20} />
+                  )}
                 </motion.button>
               </form>
             </div>
