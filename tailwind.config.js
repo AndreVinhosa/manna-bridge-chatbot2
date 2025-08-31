@@ -101,6 +101,11 @@ module.exports = {
           },
         },
       },
+      // Classes utilitárias para acessibilidade
+      screens: {
+        'reduce-motion': { 'raw': '(prefers-reduced-motion: reduce)' },
+        'high-contrast': { 'raw': '(prefers-contrast: high)' },
+      },
     },
   },
   plugins: [],
