@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import Head from 'next/head'
-import Chatbot from '../components/Chatbot'
-import { NotificationProvider, useNotification } from '../contexts/NotificationContext'
-import LoadingSpinner from '../components/LoadingSpinner'
-import { FeatureCardSkeleton } from '../components/SkeletonScreen'
+import { NotificationProvider } from '../contexts/NotificationContext'
+import { ThemeProvider } from '../contexts/ThemeContext'
+import { Chatbot } from '../components/Chatbot'
+import { LoadingSpinner } from '../components/LoadingSpinner'
+import { SkeletonScreen } from '../components/SkeletonScreen'
+import { ThemeToggle } from '../components/ThemeToggle'
+import Analytics from '../components/Analytics'
+import { trackEngagement, trackPWAEvent, trackChatbotEvent } from '../lib/analytics'
 import { Heart, MessageCircle, Users, Shield, Star, ChevronDown } from 'lucide-react'
 
 // Componente de Card Interativo com Feedback
@@ -248,7 +252,74 @@ const HomeContent = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 relative">
+    <>
+      <Head>
+        <title>Manna Bridge - Assistente Cristão | Conectando Missionários e Mantenedores</title>
+        <meta name="description" content="Conecte-se com missionários e mantenedores através do nosso assistente cristão inteligente. Baseado em valores bíblicos para fortalecer o Reino de Deus." />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#d97706" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Manna Bridge" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="application-name" content="Manna Bridge" />
+        
+        {/* PWA Meta Tags */}
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+        
+        {/* Open Graph */}
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Manna Bridge - Assistente Cristão" />
+        <meta property="og:description" content="Conectando missionários e mantenedores no Reino de Deus" />
+        <meta property="og:url" content="https://manna-bridge.vercel.app" />
+        <meta property="og:image" content="/icons/icon-512x512.png" />
+        
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Manna Bridge - Assistente Cristão" />
+        <meta name="twitter:description" content="Conectando missionários e mantenedores no Reino de Deus" />
+        <meta name="twitter:image" content="/icons/icon-512x512.png" />
+      </Head>
+
+      <Analytics />
+
+      {/* Install App Prompt */}
+      {showInstallPrompt && (
+        <div className="fixed top-4 left-4 right-4 z-50 bg-gradient-to-r from-primary-500 to-gold-500 text-white p-4 rounded-lg shadow-lg animate-slide-in-right">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Heart className="w-6 h-6 mr-3 animate-glow" />
+              <div>
+                <h4 className="font-semibold">Instalar Manna Bridge</h4>
+                <p className="text-sm opacity-90">Tenha acesso rápido ao assistente cristão</p>
+              </div>
+            </div>
+            <div className="flex space-x-2">
+              <button
+                onClick={handleInstallApp}
+                className="bg-white/90 backdrop-blur-sm text-primary-600 px-4 py-2 rounded-md text-sm font-semibold hover:bg-white hover:scale-105 transition-all duration-200"
+              >
+                Instalar
+              </button>
+              <button
+                onClick={() => setShowInstallPrompt(false)}
+                className="text-white/80 hover:text-white p-2 hover:scale-110 transition-transform"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="min-h-screen bg-gradient-heaven dark:bg-gradient-to-br dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative overflow-hidden transition-colors duration-500">
+        {/* Background Elements */}
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-50/30 via-orange-50/20 to-yellow-50/30 dark:from-gray-800/30 dark:via-gray-700/20 dark:to-gray-800/30"></div>
+        <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-gold-200/20 to-primary-200/20 dark:from-gold-400/10 dark:to-primary-400/10 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute bottom-0 right-0 w-80 h-80 bg-gradient-to-tl from-secondary-200/20 to-accent-200/20 dark:from-secondary-400/10 dark:to-accent-400/10 rounded-full blur-3xl animate-float" style={{animationDelay: '1s'}}></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-r from-gold-300/10 to-primary-300/10 dark:from-gold-500/5 dark:to-primary-500/5 rounded-full blur-2xl animate-glow"></div>
       {/* Skip to main content link */}
       <a 
         href="#main-content"
@@ -257,41 +328,45 @@ const HomeContent = () => {
         Pular para o conteúdo principal
       </a>
 
-      {/* Header Responsivo */}
-      <header
-        role="banner"
-        className="bg-white/80 backdrop-blur-sm border-b border-gold-200 sticky top-0 z-40 animate-fade-in-down"
-        style={{ transform: `translateY(${scrollY * 0.1}px)` }}
-      >
-        <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-4">
-          <div className="flex items-center justify-center">
-            <div className="flex items-center space-x-2 sm:space-x-3 hover:scale-105 transition-transform duration-300">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-primary-500 to-gold-500 rounded-full flex items-center justify-center shadow-lg animate-gentle-bounce" aria-hidden="true">
-                <Heart className="text-white" size={20} />
+        {/* Header Responsivo */}
+        <header
+          role="banner"
+          className="bg-white/70 dark:bg-gray-900/70 backdrop-blur-md border-b border-gold-200/50 dark:border-gray-700/50 sticky top-0 z-40 animate-fade-in-down relative"
+          style={{ transform: `translateY(${scrollY * 0.1}px)` }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-white/60 via-gold-50/40 to-white/60 dark:from-gray-900/60 dark:via-gray-800/40 dark:to-gray-900/60"></div>
+          <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-4 relative z-10">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 sm:space-x-3 hover:scale-105 transition-transform duration-300">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-primary-500 to-gold-500 rounded-full flex items-center justify-center shadow-lg animate-gentle-bounce" aria-hidden="true">
+                  <Heart className="text-white" size={20} />
+                </div>
+                <div className="text-center">
+                  <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary-600 to-gold-600 bg-clip-text text-transparent">
+                    Manna Bridge
+                  </h1>
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 font-medium" role="doc-subtitle">Assistente Cristão</p>
+                </div>
               </div>
-              <div className="text-center">
-                <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary-600 to-gold-600 bg-clip-text text-transparent">
-                  Manna Bridge
-                </h1>
-                <p className="text-xs sm:text-sm text-gray-600 font-medium" role="doc-subtitle">Assistente Cristão</p>
+              
+              {/* Theme Toggle */}
+              <div className="flex items-center">
+                <ThemeToggle size="md" />
               </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Indicador de Scroll */}
-      {showScrollIndicator && (
+        {/* Indicador de Scroll */}
         <div 
           className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-30 animate-fade-in"
           role="status"
           aria-label="Indicador de rolagem - role para baixo para ver mais conteúdo"
         >
-          <div className="bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-lg animate-bounce">
-            <ChevronDown className="text-primary-600" size={20} aria-hidden="true" />
+          <div className="bg-white/90 backdrop-blur-md p-3 rounded-full shadow-xl border border-gold-200/50 animate-bounce hover:scale-110 transition-transform">
+            <ChevronDown className="text-primary-600 animate-wiggle" size={20} aria-hidden="true" />
           </div>
         </div>
-      )}
 
       {/* Hero Section Mobile-First */}
       <main id="main-content" role="main" className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
@@ -303,14 +378,16 @@ const HomeContent = () => {
             delay={0.2}
           />
 
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight animate-fade-in-up px-2">
-            Paz do Senhor! 🌟
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 leading-tight animate-fade-in-up px-2">
+            <span className="bg-gradient-to-r from-primary-600 via-gold-600 to-secondary-600 bg-clip-text text-transparent animate-glow">
+              Paz do Senhor! 🌟
+            </span>
           </h2>
           
-          <p className="text-lg sm:text-xl text-gray-700 mb-6 sm:mb-8 max-w-2xl mx-auto leading-relaxed animate-fade-in-up animation-delay-300 px-4">
+          <p className="text-lg sm:text-xl text-gray-700 dark:text-gray-300 mb-6 sm:mb-8 max-w-2xl mx-auto leading-relaxed animate-fade-in-up px-4" style={{animationDelay: '0.3s'}}>
             Sou seu assistente cristão para conectar{' '}
-            <span className="font-semibold text-primary-600">missionários</span> e{' '}
-            <span className="font-semibold text-gold-600">mantenedores</span> no Reino de Deus.
+            <span className="font-semibold bg-gradient-to-r from-primary-600 to-primary-700 bg-clip-text text-transparent">missionários</span> e{' '}
+            <span className="font-semibold bg-gradient-to-r from-gold-600 to-gold-700 bg-clip-text text-transparent">mantenedores</span> no Reino de Deus.
           </p>
 
           {/* Seção de Features */}
@@ -451,11 +528,13 @@ const HomeContent = () => {
   )
 }
 
-// Wrapper principal com Provider de Notificações
+// Wrapper principal com Providers
 export default function Home() {
   return (
-    <NotificationProvider>
-      <HomeContent />
-    </NotificationProvider>
+    <ThemeProvider>
+      <NotificationProvider>
+        <HomeContent />
+      </NotificationProvider>
+    </ThemeProvider>
   )
 }
